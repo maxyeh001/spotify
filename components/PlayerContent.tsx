@@ -130,10 +130,13 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
   return (
     <div
       className="
-        grid
-        grid-cols-2
-        md:grid-cols-3
-        h-full
+        fixed
+        bottom-0
+        bg-black
+        w-full
+        py-2
+        min-h-[110px]
+        px-4
       "
     >
       {/* Left: artwork/title/like */}
