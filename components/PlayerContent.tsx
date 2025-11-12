@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, ChangeEvent } from 'react';
+import useSound from 'use-sound';
 
 import { Song } from '@/types';
 import { usePlayer } from '@/hooks/usePlayer';
@@ -8,60 +9,100 @@ import { usePlayer } from '@/hooks/usePlayer';
 import { BsPauseFill, BsPlayFill } from 'react-icons/bs';
 import { AiFillBackward, AiFillStepForward } from 'react-icons/ai';
 import { HiSpeakerXMark, HiSpeakerWave } from 'react-icons/hi2';
+import { MdShuffle, MdRepeat, MdRepeatOne } from 'react-icons/md';
 
 import { MediaItem } from './MediaItem';
 import { LikeButton } from './LikeButton';
 import { Slider } from './Slider';
-import useSound from 'use-sound';
 
 interface PlayerContentProps {
   song: Song;
   songUrl: string;
 }
 
+type RepeatMode = 'off' | 'all' | 'one';
+
 export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
   const player = usePlayer();
 
+  // volume / playback
   const [volume, setVolume] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // NEW: progress state
+  // progress
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  // shuffle / repeat
+  const [shuffle, setShuffle] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
 
   const Icon = isPlaying ? BsPauseFill : BsPlayFill;
   const VolumeIcon = volume === 0 ? HiSpeakerXMark : HiSpeakerWave;
 
-  const onPlayNextSong = () => {
-    if (player.ids.length === 0) return;
+  // ---------- helpers ----------
+  const format = (s: number) => {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const ss = Math.floor(s % 60).toString().padStart(2, '0');
+    return `${m}:${ss}`;
+  };
 
+  const cycleRepeat = () =>
+    setRepeatMode((m) => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'));
+
+  const pickNextIndex = () => {
+    if (player.ids.length === 0) return -1;
     const currentIndex = player.ids.findIndex((id) => id === player.activeId);
-    const nextSong = player.ids[currentIndex + 1];
-    if (!nextSong) return player.setId(player.ids[0]);
-    player.setId(nextSong);
+    if (shuffle && player.ids.length > 1) {
+      let idx = currentIndex;
+      while (idx === currentIndex) idx = Math.floor(Math.random() * player.ids.length);
+      return idx;
+    }
+    // normal sequential (wrap when repeat all)
+    return (currentIndex + 1) % player.ids.length;
+  };
+
+  const pickPrevIndex = () => {
+    if (player.ids.length === 0) return -1;
+    const currentIndex = player.ids.findIndex((id) => id === player.activeId);
+    if (shuffle && player.ids.length > 1) {
+      let idx = currentIndex;
+      while (idx === currentIndex) idx = Math.floor(Math.random() * player.ids.length);
+      return idx;
+    }
+    return (currentIndex - 1 + player.ids.length) % player.ids.length;
+  };
+
+  const onPlayNextSong = () => {
+    const nextIndex = pickNextIndex();
+    if (nextIndex >= 0) player.setId(player.ids[nextIndex]);
   };
 
   const onPlayPreviousSong = () => {
-    if (player.ids.length === 0) return;
-
-    const currentIndex = player.ids.findIndex((id) => id === player.activeId);
-    const previousSong = player.ids[currentIndex - 1];
-    if (!previousSong) return player.setId(player.ids[player.ids.length - 1]);
-    player.setId(previousSong);
+    const prevIndex = pickPrevIndex();
+    if (prevIndex >= 0) player.setId(player.ids[prevIndex]);
   };
 
+  // ---------- howler ----------
   const [play, { pause, sound }] = useSound(songUrl, {
     volume,
     onplay: () => setIsPlaying(true),
+    onpause: () => setIsPlaying(false),
     onend: () => {
       setIsPlaying(false);
+      if (repeatMode === 'one') {
+        // replay same track
+        sound?.seek(0);
+        sound?.play();
+        return;
+      }
       onPlayNextSong();
     },
-    onpause: () => setIsPlaying(false),
     format: ['mp3'],
   });
 
-  // Auto-play when sound loads; cleanup on unmount or song change
+  // autoplay + cleanup
   useEffect(() => {
     sound?.play();
     return () => {
@@ -69,7 +110,7 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
     };
   }, [sound]);
 
-  // NEW: read duration and update current time periodically
+  // read duration + tick current time
   useEffect(() => {
     if (!sound) return;
 
@@ -78,8 +119,7 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
       if (typeof d === 'number' && isFinite(d)) setDuration(d);
     };
     setDur();
-    // howler emits 'load' when metadata is ready
-    // @ts-ignore (howler types are permissive)
+    // @ts-ignore howler types
     sound.on('load', setDur);
 
     const id = setInterval(() => {
@@ -98,47 +138,26 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
     };
   }, [sound]);
 
-  // NEW: reset progress when URL changes
+  // reset progress when track changes
   useEffect(() => {
     setCurrentTime(0);
     setDuration(0);
   }, [songUrl]);
 
-  const handlePlay = () => {
-    if (!isPlaying) play();
-    else pause();
-  };
-
-  const toggleMute = () => {
-    setVolume((v) => (v === 0 ? 1 : 0));
-  };
-
-  // NEW: seek handler + time formatter
+  // ui handlers
+  const handlePlay = () => (isPlaying ? pause() : play());
+  const toggleMute = () => setVolume((v) => (v === 0 ? 1 : 0));
   const handleSeek = (e: ChangeEvent<HTMLInputElement>) => {
     const t = Number(e.target.value);
     if (sound) sound.seek(t);
     setCurrentTime(t);
   };
 
-  const format = (s: number) => {
-    if (!isFinite(s)) return '0:00';
-    const m = Math.floor(s / 60);
-    const ss = Math.floor(s % 60).toString().padStart(2, '0');
-    return `${m}:${ss}`;
-  };
+  // which repeat icon to show
+  const RepeatIcon = repeatMode === 'one' ? MdRepeatOne : MdRepeat;
 
   return (
-    <div
-      className="
-        fixed
-        bottom-0
-        bg-black
-        w-full
-        py-2
-        min-h-[110px]
-        px-4
-      "
-    >
+    <div className="grid grid-cols-2 md:grid-cols-3 h-full">
       {/* Left: artwork/title/like */}
       <div className="flex w-full justify-start">
         <div className="flex items-center gap-x-4">
@@ -147,45 +166,59 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
         </div>
       </div>
 
-      {/* Mobile: center play button */}
-      <div className="flex md:hidden col-auto w-full justify-end items-center">
-        <div
-          onClick={handlePlay}
-          className="
-            h-10 w-10 flex items-center justify-center
-            rounded-full bg-white p-1 cursor-pointer
-          "
-        >
-          <Icon size={30} className="text-black" />
-        </div>
-      </div>
+      {/* Center: transport + compact progress (kept centered) */}
+      <div className="hidden md:flex h-full justify-center items-center w-full px-4">
+        <div className="flex flex-col items-center w-full">
+          {/* transport row */}
+          <div className="flex items-center gap-5 mb-2">
+            <MdShuffle
+              size={22}
+              onClick={() => setShuffle((s) => !s)}
+              className={`cursor-pointer ${shuffle ? 'text-green-500' : 'text-neutral-400 hover:text-white'} transition`}
+              title="Shuffle"
+            />
+            <AiFillBackward
+              onClick={onPlayPreviousSong}
+              size={28}
+              className="text-neutral-400 cursor-pointer hover:text-white transition"
+              title="Previous"
+            />
+            <div
+              onClick={handlePlay}
+              className="flex items-center justify-center h-10 w-10 rounded-full bg-white p-1 cursor-pointer"
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              <Icon size={30} className="text-black" />
+            </div>
+            <AiFillStepForward
+              onClick={onPlayNextSong}
+              size={28}
+              className="text-neutral-400 cursor-pointer hover:text-white transition"
+              title="Next"
+            />
+            <RepeatIcon
+              size={22}
+              onClick={cycleRepeat}
+              className={`cursor-pointer ${repeatMode !== 'off' ? 'text-green-500' : 'text-neutral-400 hover:text-white'} transition`}
+              title={repeatMode === 'off' ? 'Repeat Off' : repeatMode === 'all' ? 'Repeat All' : 'Repeat One'}
+            />
+          </div>
 
-      {/* Desktop: transport controls */}
-      <div
-        className="
-          hidden h-full md:flex justify-center items-center
-          w-full max-w-[722px] gap-x-6
-        "
-      >
-        <AiFillBackward
-          onClick={onPlayPreviousSong}
-          size={30}
-          className="text-neutral-400 cursor-pointer hover:text-white transition"
-        />
-        <div
-          onClick={handlePlay}
-          className="
-            flex items-center justify-center
-            h-10 w-10 rounded-full bg-white p-1 cursor-pointer
-          "
-        >
-          <Icon size={30} className="text-black" />
+          {/* progress row (centered + shortened) */}
+          <div className="flex items-center gap-3 w-full max-w-[520px]">
+            <span className="text-xs text-neutral-400 w-10 text-right">{format(currentTime)}</span>
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              step="0.1"
+              value={currentTime}
+              onChange={handleSeek}
+              className="w-full accent-green-500"
+            />
+            <span className="text-xs text-neutral-400 w-10">{format(duration)}</span>
+          </div>
         </div>
-        <AiFillStepForward
-          onClick={onPlayNextSong}
-          size={30}
-          className="text-neutral-400 cursor-pointer hover:text-white transition"
-        />
       </div>
 
       {/* Right: volume */}
@@ -196,26 +229,13 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
         </div>
       </div>
 
-      {/* NEW: progress / seek bar (full-width row) */}
-      <div className="col-span-2 md:col-span-3 mt-2 px-2 md:px-6">
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-neutral-400 w-10 text-right">
-            {format(currentTime)}
-          </span>
-
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step="0.1"
-            value={currentTime}
-            onChange={handleSeek}
-            className="w-full accent-green-500"
-          />
-
-          <span className="text-xs text-neutral-400 w-10">
-            {format(duration)}
-          </span>
+      {/* Mobile: center play only (transport still available) */}
+      <div className="flex md:hidden col-auto w-full justify-end items-center">
+        <div
+          onClick={handlePlay}
+          className="h-10 w-10 flex items-center justify-center rounded-full bg-white p-1 cursor-pointer"
+        >
+          <Icon size={30} className="text-black" />
         </div>
       </div>
     </div>
