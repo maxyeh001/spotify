@@ -17,7 +17,11 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
   return (
     <div
       onClick={() => onClick(data.id)}
-      className="relative group flex flex-col items-center justify-center overflow-hidden gap-x-4 bg-neutral-400/5 cursor-pointer hover:bg-neutral-400/10 transition p-3"
+      className="
+        relative group flex flex-col items-center justify-center
+        overflow-hidden gap-x-4 bg-neutral-400/5 cursor-pointer
+        hover:bg-neutral-400/10 transition p-3
+      "
     >
       <div className="relative aspect-square w-full h-full rounded-md overflow-hidden">
         <Image loading="eager" className="object-cover" src={imagePath || '/images/liked.png'} fill alt="Image" />
@@ -31,7 +35,7 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
             <Link
               href={`/artist/${data.artist_id}`}
               className="hover:underline"
-              onClick={(e) => e.stopPropagation()} // don’t start playback when clicking the link
+              onClick={(e) => e.stopPropagation()}  // don't trigger play
             >
               {data.author}
             </Link>
