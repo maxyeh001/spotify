@@ -87,7 +87,8 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
   // ---------- howler ----------
   const [play, { pause, sound }] = useSound(songUrl, {
   volume,
-  html5: true,              // <--- add this line
+  html5: true,              // important for mobile
+
   format: ['mp3'],
 
   onplay: () => setIsPlaying(true),
@@ -104,9 +105,18 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
   },
 
   // optional: log any mobile errors so we can see them
-  onloaderror: (id, err) => console.error('Audio load error', id, err),
-  onplayerror: (id, err) => console.error('Audio play error', id, err),
+  onloaderror: (_id: string | null, err: any) => {
+    console.error('Audio load error', err);
+  },
+  onplayerror: (_id: string | null, err: any) => {
+    console.error('Audio play error', err);
+  },
   });
+
+
+
+
+  
 
 
   // autoplay + cleanup
