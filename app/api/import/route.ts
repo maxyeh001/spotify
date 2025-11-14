@@ -1,13 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
-// Use your Supabase environment variables
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-side only
-);
-
-// Simple CSV parser assuming commas, with no crazy quoting
+// Simple CSV parser: assumes commas, header row, basic quoting only
 function parseCsv(text: string) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length < 2) return [];
@@ -31,6 +26,28 @@ function parseCsv(text: string) {
 }
 
 export async function POST(req: Request) {
+  const supabase = createRouteHandlerClient({ cookies });
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Optional: enforce admin only via profiles.role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const form = await req.formData();
 
   const csvFile = form.get('csv') as File | null;
@@ -44,7 +61,7 @@ export async function POST(req: Request) {
     logs.push(msg);
   };
 
-  // Read CSV text and parse
+  // Parse CSV
   const csvText = await csvFile.text();
   const rows = parseCsv(csvText);
 
@@ -90,7 +107,7 @@ export async function POST(req: Request) {
         .from('artists')
         .insert({
           name: artist_name,
-          bio: artist_bio || null, // safe: if blank, becomes null
+          bio: artist_bio || null, // if blank, becomes null
           avatar_path: null,
           hero_path: null,
         })
@@ -98,7 +115,9 @@ export async function POST(req: Request) {
         .single();
 
       if (createArtistErr || !createdArtist) {
-        log(`  ❌ Failed to create artist "${artist_name}": ${createArtistErr?.message}`);
+        log(
+          `  ❌ Failed to create artist "${artist_name}": ${createArtistErr?.message}`
+        );
         continue;
       }
 
@@ -122,7 +141,9 @@ export async function POST(req: Request) {
       });
 
     if (audioUploadErr) {
-      log(`  ❌ Failed to upload audio "${audio_file}": ${audioUploadErr.message}`);
+      log(
+        `  ❌ Failed to upload audio "${audio_file}": ${audioUploadErr.message}`
+      );
       continue;
     }
 
@@ -142,7 +163,9 @@ export async function POST(req: Request) {
           });
 
         if (imageUploadErr) {
-          log(`  ⚠️ Failed to upload image "${image_file}": ${imageUploadErr.message}`);
+          log(
+            `  ⚠️ Failed to upload image "${image_file}": ${imageUploadErr.message}`
+          );
         } else {
           imagePath = imgStoragePath;
           log(`  ✅ Uploaded image: ${image_file}`);
@@ -159,6 +182,7 @@ export async function POST(req: Request) {
         artist_id: artist.id,
         song_path: audioPath,
         image_path: imagePath,
+        user_id: user.id,
       })
       .select('*')
       .single();
@@ -179,22 +203,27 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (playlistErr) {
-        log(`  ⚠️ Error checking playlist "${playlist_name}": ${playlistErr.message}`);
+        log(
+          `  ⚠️ Error checking playlist "${playlist_name}": ${playlistErr.message}`
+        );
       }
 
       if (!playlist) {
-        const { data: createdPlaylist, error: createPlaylistErr } = await supabase
-          .from('playlists')
-          .insert({
-            name: playlist_name,
-            description: null,
-            image_path: null,
-          })
-          .select('*')
-          .single();
+        const { data: createdPlaylist, error: createPlaylistErr } =
+          await supabase
+            .from('playlists')
+            .insert({
+              name: playlist_name,
+              description: null,
+              image_path: null,
+            })
+            .select('*')
+            .single();
 
         if (createPlaylistErr || !createdPlaylist) {
-          log(`  ❌ Failed to create playlist "${playlist_name}": ${createPlaylistErr?.message}`);
+          log(
+            `  ❌ Failed to create playlist "${playlist_name}": ${createPlaylistErr?.message}`
+          );
           continue;
         }
 
@@ -202,16 +231,18 @@ export async function POST(req: Request) {
         log(`  ✅ Created playlist: ${playlist_name}`);
       }
 
-      const position = playlist_position ? Number(playlist_position) : null;
+      const pos = playlist_position ? Number(playlist_position) : null;
 
       const { error: linkErr } = await supabase.from('playlist_songs').insert({
         playlist_id: playlist.id,
         song_id: song.id,
-        position: Number.isFinite(position) ? position : null,
+        position: Number.isFinite(pos) ? pos : null,
       });
 
       if (linkErr) {
-        log(`  ⚠️ Failed to link song to playlist "${playlist_name}": ${linkErr.message}`);
+        log(
+          `  ⚠️ Failed to link song to playlist "${playlist_name}": ${linkErr.message}`
+        );
       } else {
         log(`  ✅ Added to playlist "${playlist_name}"`);
       }
