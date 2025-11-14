@@ -86,21 +86,28 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
 
   // ---------- howler ----------
   const [play, { pause, sound }] = useSound(songUrl, {
-    volume,
-    onplay: () => setIsPlaying(true),
-    onpause: () => setIsPlaying(false),
-    onend: () => {
-      setIsPlaying(false);
-      if (repeatMode === 'one') {
-        // replay same track
-        sound?.seek(0);
-        sound?.play();
-        return;
-      }
-      onPlayNextSong();
-    },
-    format: ['mp3'],
+  volume,
+  html5: true,              // <--- add this line
+  format: ['mp3'],
+
+  onplay: () => setIsPlaying(true),
+  onpause: () => setIsPlaying(false),
+  onend: () => {
+    setIsPlaying(false);
+    if (repeatMode === 'one') {
+      // replay same track
+      sound?.seek(0);
+      sound?.play();
+      return;
+    }
+    onPlayNextSong();
+  },
+
+  // optional: log any mobile errors so we can see them
+  onloaderror: (id, err) => console.error('Audio load error', id, err),
+  onplayerror: (id, err) => console.error('Audio play error', id, err),
   });
+
 
   // autoplay + cleanup
   useEffect(() => {
