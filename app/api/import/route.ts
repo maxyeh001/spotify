@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Optional: enforce admin only via profiles.role
+  // Optional: enforce admin-only via profiles.role
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -81,6 +81,8 @@ export async function POST(req: Request) {
       artist_bio,
       playlist_name,
       playlist_position,
+      audio_path,  // NEW: optional custom storage path in songs bucket
+      image_path,  // NEW: optional custom storage path in images bucket
     } = row;
 
     // REQUIRED FIELDS
@@ -125,50 +127,59 @@ export async function POST(req: Request) {
       log(`  ✅ Created artist: ${artist_name}`);
     }
 
-    // -------- Audio upload --------
+    // -------- Audio upload (to songs bucket) --------
     const audioFile = findFile(audio_file, audioFiles);
     if (!audioFile) {
       log(`  ⚠️ Audio file not found in upload: ${audio_file}`);
       continue;
     }
 
-    const audioPath = `imports/${Date.now()}-${audioFile.name}`;
+    // If CSV gives us audio_path, use it; otherwise fall back to imports/...
+    const audioStoragePath =
+      (audio_path && String(audio_path).trim()) ||
+      `imports/${Date.now()}-${audioFile.name}`;
+
     const { error: audioUploadErr } = await supabase.storage
       .from('songs') // your audio bucket
-      .upload(audioPath, audioFile, {
+      .upload(audioStoragePath, audioFile, {
         cacheControl: '3600',
         upsert: false,
       });
 
     if (audioUploadErr) {
       log(
-        `  ❌ Failed to upload audio "${audio_file}": ${audioUploadErr.message}`
+        `  ❌ Failed to upload audio "${audio_file}" to "${audioStoragePath}": ${audioUploadErr.message}`
       );
       continue;
     }
 
-    // -------- Image upload (optional) --------
-    let imagePath: string | null = null;
+    // -------- Image upload (optional, to images bucket) --------
+    let finalImagePath: string | null = null;
+
     if (image_file) {
       const imageFile = findFile(image_file, imageFiles);
       if (!imageFile) {
         log(`  ⚠️ Image file listed but not uploaded: ${image_file}`);
       } else {
-        const imgStoragePath = `imports/${Date.now()}-${imageFile.name}`;
+        // If CSV gives us image_path, use it; otherwise default
+        const imageStoragePath =
+          (image_path && String(image_path).trim()) ||
+          `imports/${Date.now()}-${imageFile.name}`;
+
         const { error: imageUploadErr } = await supabase.storage
           .from('images') // your image bucket
-          .upload(imgStoragePath, imageFile, {
+          .upload(imageStoragePath, imageFile, {
             cacheControl: '3600',
             upsert: false,
           });
 
         if (imageUploadErr) {
           log(
-            `  ⚠️ Failed to upload image "${image_file}": ${imageUploadErr.message}`
+            `  ⚠️ Failed to upload image "${image_file}" to "${imageStoragePath}": ${imageUploadErr.message}`
           );
         } else {
-          imagePath = imgStoragePath;
-          log(`  ✅ Uploaded image: ${image_file}`);
+          finalImagePath = imageStoragePath;
+          log(`  ✅ Uploaded image: ${image_file} -> ${imageStoragePath}`);
         }
       }
     }
@@ -180,8 +191,8 @@ export async function POST(req: Request) {
         title,
         author: artist_name,
         artist_id: artist.id,
-        song_path: audioPath,
-        image_path: imagePath,
+        song_path: audioStoragePath, // use the actual storage path
+        image_path: finalImagePath,
         user_id: user.id,
       })
       .select('*')
