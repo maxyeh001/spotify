@@ -1,16 +1,15 @@
-import { Song } from '@/types';
+import { Song } from "@/types";
 
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
-import { supabase } from '@supabase/auth-ui-shared';
+const BASE = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
 
 export const useLoadImage = (song: Song) => {
-  const supabaseClient = useSupabaseClient();
+  if (!song?.image_path) return null;
 
-  if (!song) {
-    return null;
+  // If already a full URL, return it
+  if (song.image_path.startsWith("http")) {
+    return song.image_path;
   }
 
-  const { data: imageData } = supabaseClient.storage.from('images').getPublicUrl(song.image_path);
-
-  return imageData.publicUrl;
+  // Build the full URL using R2 base URL
+  return `${BASE}/${song.image_path}`;
 };
