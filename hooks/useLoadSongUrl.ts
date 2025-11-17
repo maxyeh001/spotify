@@ -1,14 +1,15 @@
-import { Song } from '@/types';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { Song } from "@/types";
+
+const BASE = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
 
 export const useLoadSongUrl = (song: Song) => {
-  const supabaseClient = useSupabaseClient();
+  if (!song?.song_path) return "";
 
-  if (!song) {
-    return '';
+  // If the CSV or DB already contains full URLs
+  if (song.song_path.startsWith("http")) {
+    return song.song_path;
   }
 
-  const { data: songData } = supabaseClient.storage.from('songs').getPublicUrl(song.song_path);
-
-  return songData.publicUrl;
+  // Build R2 public URL
+  return `${BASE}/${song.song_path}`;
 };
