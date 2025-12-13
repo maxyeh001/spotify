@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+
 import SongPageClient from "./song-page-client";
 
 export const revalidate = 0;
@@ -11,18 +13,16 @@ export default async function SongPage({
 }) {
   const supabase = createServerComponentClient({ cookies });
 
-  // 1) Find the artist by slug
+  // Find artist by slug
   const { data: artist, error: artistErr } = await supabase
     .from("artists")
     .select("*")
     .eq("slug", params.artist)
     .single();
 
-  if (artistErr || !artist) {
-    return <div className="p-6 text-neutral-300">Artist not found.</div>;
-  }
+  if (artistErr || !artist) return notFound();
 
-  // 2) Find the song by (artist_id + song slug)
+  // Find song by slug + artist_id
   const { data: song, error: songErr } = await supabase
     .from("songs")
     .select("*")
@@ -30,9 +30,7 @@ export default async function SongPage({
     .eq("slug", params.song)
     .single();
 
-  if (songErr || !song) {
-    return <div className="p-6 text-neutral-300">Song not found.</div>;
-  }
+  if (songErr || !song) return notFound();
 
   return <SongPageClient artist={artist} song={song} />;
 }
