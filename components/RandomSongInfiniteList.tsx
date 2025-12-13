@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Song } from "@/types";
 import { SongItem } from "@/components/SongItem";
-import useOnPlay from "@/hooks/useOnPlay";
+import { useOnPlay } from "@/hooks/useOnPlay";
 import { getRandomSongs } from "@/actions/getRandomSongs";
 
 const PAGE_SIZE = 20; // keep in sync with getRandomSongs
