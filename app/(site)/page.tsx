@@ -1,56 +1,62 @@
-// app/(site)/page.tsx
-import { getPlaylists } from '@/actions/getPlaylists';
-import getFeaturedSongs from '@/actions/getFeaturedSongs';
+import { Header } from "@/components/Header";
+import { PageContent } from "@/components/PageContent";
+import { ArtistCard } from "@/components/ArtistCard";
+import { PlaylistCard } from "@/components/PlaylistCard";
 
-import { Header } from '@/components/Header';
-import { PageContent } from '@/components/PageContent';
-import { PlaylistCard } from '@/components/PlaylistCard';
+import { getTrendingSongs } from "@/actions/getTrendingSongs";
+import { getPopularArtists } from "@/actions/getPopularArtists";
+import { getPopularSongs } from "@/actions/getPopularSongs";
 
 export const revalidate = 0;
 
 export default async function Home() {
-  // fetch data for both sections
-  const [playlists, featuredSongs] = await Promise.all([
-    getPlaylists(10),
-    getFeaturedSongs(), // random selection biased by views
+  const [trending, popularArtists, popularSongs] = await Promise.all([
+    getTrendingSongs(),
+    getPopularArtists(),
+    getPopularSongs(12),
   ]);
 
   return (
     <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
+
+      {/* HEADER */}
       <Header>
-        <div className="mb-2">
-          <h1 className="text-white text-3xl font-semibold">Welcome back</h1>
-          {/* Liked Songs row removed on purpose */}
-        </div>
+        <h1 className="text-white text-3xl font-bold mb-4">Welcome back</h1>
       </Header>
 
-      {/* Recommended Playlists */}
-      <div className="mt-2 mb-7 px-6">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-white text-2xl font-semibold">Recommended Playlists</h2>
+      {/* TRENDING SONGS */}
+      <section className="px-6 mb-8">
+        <div className="flex justify-between">
+          <h2 className="text-white text-2xl font-semibold">Trending Songs</h2>
+          <a href="/trending" className="text-neutral-400 hover:text-white text-sm">Show all</a>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
-          {playlists.map((p) => (
-            <PlaylistCard
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              imagePath={p.image_path ?? undefined}
-              subtitle={p.description}
-            />
+
+        <PageContent songs={trending} />
+      </section>
+
+      {/* POPULAR ARTISTS */}
+      <section className="px-6 mb-8">
+        <div className="flex justify-between">
+          <h2 className="text-white text-2xl font-semibold">Popular Artists</h2>
+          <a href="/artists/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 mt-4">
+          {popularArtists.map((a) => (
+            <ArtistCard key={a.id} artist={a} />
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Featured songs */}
-      <div className="mb-7 px-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-white text-2xl font-semibold">Featured</h2>
+      {/* POPULAR SONGS */}
+      <section className="px-6 mb-10">
+        <div className="flex justify-between">
+          <h2 className="text-white text-2xl font-semibold">Popular Songs</h2>
+          <a href="/songs/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
         </div>
-        <div className="mt-2">
-          <PageContent songs={featuredSongs} />
-        </div>
-      </div>
+
+        <PageContent songs={popularSongs} />
+      </section>
     </div>
   );
 }
