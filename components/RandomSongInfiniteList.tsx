@@ -1,27 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { Song } from "@/types";
 import { SongItem } from "@/components/SongItem";
 import { useOnPlay } from "@/hooks/useOnPlay";
 import { getRandomSongs } from "@/actions/getRandomSongs";
 
-export default function RandomSongInfiniteList() {
+type Props = {
+  initialCount?: number; // how many songs are already shown above
+};
+
+export default function RandomSongInfiniteList({ initialCount = 0 }: Props) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const onPlay = useOnPlay(songs);
+  const onPlay = useOnPlay([...songs]); // list used for play queue
 
   const loadMore = async () => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
 
-    const next = await getRandomSongs(page);
+    // page is offset by initialCount so you don't repeat the first 12
+    const next = await getRandomSongs(page + Math.ceil(initialCount / 20));
 
-    // Stop only when Supabase returns *no* rows
     if (!next.length) {
       setHasMore(false);
       setIsLoading(false);
@@ -33,13 +36,11 @@ export default function RandomSongInfiniteList() {
     setIsLoading(false);
   };
 
-  // initial load
   useEffect(() => {
     loadMore();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // infinite scroll listener
   useEffect(() => {
     const onScroll = () => {
       if (
@@ -55,7 +56,19 @@ export default function RandomSongInfiniteList() {
   });
 
   return (
-    <div className="space-y-2">
+    <div
+      className="
+        mt-4
+        grid
+        grid-cols-2
+        sm:grid-cols-3
+        md:grid-cols-4
+        lg:grid-cols-5
+        xl:grid-cols-6
+        2xl:grid-cols-7
+        gap-4
+      "
+    >
       {songs.map((song) => (
         <SongItem
           key={song.id}
@@ -65,11 +78,13 @@ export default function RandomSongInfiniteList() {
       ))}
 
       {isLoading && (
-        <p className="text-neutral-400 text-sm">Loading...</p>
+        <p className="text-neutral-400 text-sm col-span-full">
+          Loading...
+        </p>
       )}
 
-      {!hasMore && !isLoading && (
-        <p className="text-neutral-400 text-sm">
+      {!hasMore && !isLoading && songs.length > 0 && (
+        <p className="text-neutral-400 text-sm col-span-full">
           No more songs to load.
         </p>
       )}
