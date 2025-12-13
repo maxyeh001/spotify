@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from("songs")
-    .select("*")
+    .select("*, artists!inner(slug)")
     .order("views", { ascending: false })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
