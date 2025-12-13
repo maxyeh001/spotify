@@ -1,29 +1,8 @@
-import Link from "next/link";
-import Image from "next/image";
 import { Header } from "@/components/Header";
 import { InfiniteGrid } from "@/components/InfiniteGrid";
+import { ArtistCard } from "@/components/ArtistCard";
 
 export const revalidate = 0;
-
-function ArtistCard({ artist }: { artist: any }) {
-  // If your artists.avatar_path is a FULL URL (R2), next/image will load it
-  const avatar = artist.avatar_path || "/images/liked.png";
-
-  return (
-    <Link
-      href={`/artist/${artist.id}`}
-      className="group flex flex-col gap-3 bg-neutral-400/5 hover:bg-neutral-400/10 transition p-3 rounded-md"
-    >
-      <div className="relative w-full aspect-square overflow-hidden rounded-full">
-        <Image src={avatar} alt={artist.name} fill className="object-cover" />
-      </div>
-      <div>
-        <p className="text-white font-semibold truncate">{artist.name}</p>
-        <p className="text-neutral-400 text-sm truncate">Artist</p>
-      </div>
-    </Link>
-  );
-}
 
 export default function PopularArtistsPage() {
   return (
