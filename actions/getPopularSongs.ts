@@ -5,9 +5,9 @@ export async function getPopularSongs(limit = 12) {
   const supabase = createServerComponentClient({ cookies });
 
   const { data, error } = await supabase
-    .from("songs")
-    .select("*, artists(*)")
-    .order("views", { ascending: false })
+    .from("pinned_trending_songs")
+    .select("position, songs(*, artists(*))")
+    .order("position", { ascending: true })
     .limit(limit);
 
   if (error) {
@@ -15,5 +15,6 @@ export async function getPopularSongs(limit = 12) {
     return [];
   }
 
-  return data;
+  // Return the song rows (with nested artists)
+  return data?.map((row) => row.songs) ?? [];
 }
