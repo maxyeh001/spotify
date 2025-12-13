@@ -15,6 +15,8 @@ export async function getPopularSongs(limit = 12) {
     return [];
   }
 
-  // Return the song rows (with nested artists)
-  return data?.map((row) => row.songs) ?? [];
+  // data is an array of rows; each row has a `songs` object. Return those directly.
+  const songs = (data ?? []).map((row: any) => row.songs);
+
+  return songs;
 }
