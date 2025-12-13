@@ -4,10 +4,9 @@ import { cookies } from "next/headers";
 export async function getTrendingSongs() {
   const supabase = createServerComponentClient({ cookies });
 
-  // Use pinned_trending_songs table instead of songs.is_trending
   const { data, error } = await supabase
     .from("pinned_trending_songs")
-    .select("position, songs(*, artists(*))")
+    .select("position, songs(*, artists(slug))")
     .order("position", { ascending: true })
     .limit(12);
 
@@ -16,6 +15,16 @@ export async function getTrendingSongs() {
     return [];
   }
 
-  // return array of songs (PageContent expects songs[])
-  return (data ?? []).map((row: any) => row.songs).filter(Boolean);
+  // Flatten to songs and attach artist_slug for URL building
+  return (data ?? [])
+    .map((row: any) => {
+      const s = row.songs;
+      if (!s) return null;
+
+      return {
+        ...s,
+        artist_slug: s.artists?.slug ?? null,
+      };
+    })
+    .filter(Boolean);
 }
