@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Props<T> = {
-  fetchUrl: string; // /api/...
+  fetchUrl: string; // e.g. /api/trending
   renderItem: (item: T, allItems: T[]) => React.ReactNode;
 };
 
@@ -19,17 +19,28 @@ export function InfiniteGrid<T>({ fetchUrl, renderItem }: Props<T>) {
     if (loading || done) return;
     setLoading(true);
 
-    const res = await fetch(`${fetchUrl}?offset=${offset}&limit=24`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`${fetchUrl}?limit=24&offset=${offset}`, {
+        cache: "no-store",
+      });
+      const json = await res.json();
 
-    const newItems: T[] = data.items ?? [];
-    setItems((prev) => [...prev, ...newItems]);
+      if (!res.ok) throw new Error(json?.error || "Failed to fetch");
 
-    const nextOffset = data.nextOffset ?? offset + newItems.length;
-    setOffset(nextOffset);
+      const newItems: T[] = json.items ?? [];
+      const nextOffset: number = json.nextOffset ?? offset + newItems.length;
 
-    if (!newItems.length) setDone(true);
-    setLoading(false);
+      setItems((prev) => [...prev, ...newItems]);
+      setOffset(nextOffset);
+
+      if (newItems.length === 0) setDone(true);
+    } catch (e) {
+      console.error(e);
+      // stop trying forever if something is wrong
+      setDone(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -38,20 +49,20 @@ export function InfiniteGrid<T>({ fetchUrl, renderItem }: Props<T>) {
   }, []);
 
   useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
+    if (!sentinelRef.current) return;
 
-    const obs = new IntersectionObserver(
+    const el = sentinelRef.current;
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { rootMargin: "800px" }
+      { root: null, rootMargin: "600px", threshold: 0 }
     );
 
-    obs.observe(el);
-    return () => obs.disconnect();
+    observer.observe(el);
+    return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentinelRef.current, offset, loading, done]);
+  }, [sentinelRef.current, offset, done, loading]);
 
   return (
     <>
@@ -64,7 +75,9 @@ export function InfiniteGrid<T>({ fetchUrl, renderItem }: Props<T>) {
       <div ref={sentinelRef} className="h-10" />
 
       {loading && <div className="text-neutral-400 text-sm mt-4">Loading…</div>}
-      {done && <div className="text-neutral-500 text-sm mt-4">That’s everything.</div>}
+      {done && items.length > 0 && (
+        <div className="text-neutral-500 text-sm mt-4">That’s everything.</div>
+      )}
     </>
   );
 }
