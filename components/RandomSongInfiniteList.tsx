@@ -7,8 +7,6 @@ import { SongItem } from "@/components/SongItem";
 import { useOnPlay } from "@/hooks/useOnPlay";
 import { getRandomSongs } from "@/actions/getRandomSongs";
 
-const PAGE_SIZE = 20; // keep in sync with getRandomSongs
-
 export default function RandomSongInfiniteList() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [page, setPage] = useState(0);
@@ -23,13 +21,15 @@ export default function RandomSongInfiniteList() {
 
     const next = await getRandomSongs(page);
 
-    if (!next.length || next.length < PAGE_SIZE) {
+    // Stop only when Supabase returns *no* rows
+    if (!next.length) {
       setHasMore(false);
+      setIsLoading(false);
+      return;
     }
 
     setSongs((prev) => [...prev, ...next]);
     setPage((prev) => prev + 1);
-
     setIsLoading(false);
   };
 
