@@ -43,7 +43,20 @@ export default async function Home() {
           <a href="/artists/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4 mt-4">
+        <div
+          className="
+            mt-4
+            grid
+            gap-x-6 gap-y-6
+            grid-cols-2
+            sm:grid-cols-3
+            md:grid-cols-4
+            lg:grid-cols-5
+            xl:grid-cols-6
+            2xl:grid-cols-7
+          "
+        >
+
           {popularArtists.map((a) => (
             <ArtistCard key={a.id} artist={a} />
           ))}
