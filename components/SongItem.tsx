@@ -9,7 +9,7 @@ import { useLoadImage } from "@/hooks/useLoadImage";
 interface SongItemProps {
   data: Song & {
     slug?: string | null;
-    artist_slug?: string | null; // make sure your queries include this if you want /artist/song
+    artist_slug?: string | null;
   };
   onClick: (id: string) => void;
 }
@@ -17,58 +17,73 @@ interface SongItemProps {
 export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
   const imagePath = useLoadImage(data);
 
-  // Build the share URL if slugs exist.
-  // If not, fall back to "no link" and keep old click-to-play behavior.
+  // Only create a share URL if both slugs exist
   const href =
     data.slug && data.artist_slug ? `/${data.artist_slug}/${data.slug}` : null;
 
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick(data.id);
+  };
 
-  const CardInner = (
+  const Card = () => (
     <div
       className="
         relative group flex flex-col overflow-hidden
-        cursor-pointer rounded-md bg-transparent
-        hover:bg-neutral-400/10 transition
+        cursor-pointer rounded-md
+        bg-transparent hover:bg-neutral-400/10 transition
         p-1.5
       "
     >
-      <div className="relative aspect-square w-full rounded-md overflow-hidden">
+      <div className="relative aspect-square w-full overflow-hidden rounded-md">
         <Image
-          loading="eager"
-          className="object-cover"
           src={imagePath || "/images/liked.png"}
           fill
           alt="Image"
+          className="object-cover"
+          loading="eager"
         />
-  
-        {/* Play button overlay (bottom-right of the image, like Spotify) */}
-        <div
-          className="absolute bottom-2 right-2"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onClick(data.id);
-          }}
-        >
+
+        <div className="absolute bottom-2 right-2" onClick={handlePlayClick}>
           <PlayButton />
         </div>
       </div>
-  
-      <div className="flex flex-col items-start w-full pt-2 gap-y
 
-  // If we have a shareable URL, wrap card in Link (click card = navigate).
+      <div className="flex flex-col items-start w-full pt-2 gap-y-0.5">
+        <p className="w-full truncate text-sm font-semibold">{data.title}</p>
+
+        <p className="w-full truncate text-xs text-neutral-400 pb-1">
+          By{" "}
+          {data.artist_id ? (
+            <Link
+              href={`/artist/${data.artist_id}`}
+              className="hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {data.author}
+            </Link>
+          ) : (
+            data.author
+          )}
+        </p>
+      </div>
+    </div>
+  );
+
+  // If we have a real link, clicking the card navigates
   if (href) {
     return (
       <Link href={href} className="block">
-        {CardInner}
+        <Card />
       </Link>
     );
   }
 
-  // Otherwise, keep old behavior: clicking the card plays.
+  // Otherwise, clicking the card plays
   return (
     <div onClick={() => onClick(data.id)}>
-      {CardInner}
+      <Card />
     </div>
   );
 };
