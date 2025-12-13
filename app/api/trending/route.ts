@@ -9,50 +9,58 @@ export async function GET(req: Request) {
   const limit = Number(url.searchParams.get("limit") ?? 24);
   const offset = Number(url.searchParams.get("offset") ?? 0);
 
-  // first page: pinned first, then fill with popular-by-views
+  // First page: pinned first, then fill with high-view songs
   if (offset === 0) {
     const { data: pinned, error: pinnedErr } = await supabase
       .from("pinned_trending_songs")
       .select("position, songs(*)")
       .order("position", { ascending: true });
 
-    if (pinnedErr)
+    if (pinnedErr) {
       return NextResponse.json({ error: pinnedErr.message }, { status: 500 });
+    }
 
-    const pinnedSongs = (pinned ?? [])
-      .map((x: any) => x.songs)
-      .filter(Boolean);
-
+    const pinnedSongs = (pinned ?? []).map((p: any) => p.songs).filter(Boolean);
     const pinnedIds = pinnedSongs.map((s: any) => s.id);
-    const remaining = Math.max(0, limit - pinnedSongs.length);
+
+    const fillerCount = Math.max(limit - pinnedSongs.length, 0);
 
     let filler: any[] = [];
-    if (remaining > 0) {
-      let q = supabase
+    if (fillerCount > 0) {
+      const { data: fillerData, error: fillerErr } = await supabase
         .from("songs")
         .select("*")
+        .not("id", "in", `(${pinnedIds.map((id) => `"${id}"`).join(",") || '""'})`)
         .order("views", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(remaining);
+        .limit(fillerCount);
 
-      // avoid duplicates if there are pinned ids
-      if (pinnedIds.length) q = q.not("id", "in", `(${pinnedIds.join(",")})`);
+      if (fillerErr) {
+        return NextResponse.json({ error: fillerErr.message }, { status: 500 });
+      }
 
-      const { data: more, error: moreErr } = await q;
-      if (moreErr)
-        return NextResponse.json({ error: moreErr.message }, { status: 500 });
-
-      filler = more ?? [];
+      filler = fillerData ?? [];
     }
 
     const items = [...pinnedSongs, ...filler];
     return NextResponse.json({ items, nextOffset: items.length });
   }
 
-  // next pages: keep going by views
+  // Next pages: continue by views (excluding pinned songs)
+  const { data: pinned, error: pinnedErr } = await supabase
+    .from("pinned_trending_songs")
+    .select("song_id");
+
+  if (pinnedErr) {
+    return NextResponse.json({ error: pinnedErr.message }, { status: 500 });
+  }
+
+  const pinnedIds = (pinned ?? []).map((p: any) => p.song_id);
+
   const { data, error } = await supabase
     .from("songs")
     .select("*")
+    .not("id", "in", `(${pinnedIds.map((id) => `"${id}"`).join(",") || '""'})`)
     .order("views", { ascending: false })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
