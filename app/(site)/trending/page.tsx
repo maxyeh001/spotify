@@ -1,9 +1,9 @@
+"use client";
+
 import { Header } from "@/components/Header";
 import { InfiniteGrid } from "@/components/InfiniteGrid";
 import SongCard from "@/components/SongCard";
 import { Song } from "@/types";
-
-export const revalidate = 0;
 
 export default function TrendingPage() {
   return (
