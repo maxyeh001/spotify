@@ -9,46 +9,59 @@ export async function GET(req: Request) {
   const limit = Number(url.searchParams.get("limit") ?? 24);
   const offset = Number(url.searchParams.get("offset") ?? 0);
 
+  // First page: pinned first, then fill with newest artists
   if (offset === 0) {
     const { data: pinned, error: pinnedErr } = await supabase
       .from("pinned_popular_artists")
       .select("position, artists(*)")
       .order("position", { ascending: true });
 
-    if (pinnedErr)
+    if (pinnedErr) {
       return NextResponse.json({ error: pinnedErr.message }, { status: 500 });
+    }
 
     const pinnedArtists = (pinned ?? [])
-      .map((x: any) => x.artists)
+      .map((p: any) => p.artists)
       .filter(Boolean);
 
     const pinnedIds = pinnedArtists.map((a: any) => a.id);
-    const remaining = Math.max(0, limit - pinnedArtists.length);
+    const fillerCount = Math.max(limit - pinnedArtists.length, 0);
 
     let filler: any[] = [];
-    if (remaining > 0) {
-      let q = supabase
+    if (fillerCount > 0) {
+      const { data: fillerData, error: fillerErr } = await supabase
         .from("artists")
         .select("*")
+        .not("id", "in", `(${pinnedIds.map((id) => `"${id}"`).join(",") || '""'})`)
         .order("created_at", { ascending: false })
-        .limit(remaining);
+        .limit(fillerCount);
 
-      if (pinnedIds.length) q = q.not("id", "in", `(${pinnedIds.join(",")})`);
+      if (fillerErr) {
+        return NextResponse.json({ error: fillerErr.message }, { status: 500 });
+      }
 
-      const { data: more, error: moreErr } = await q;
-      if (moreErr)
-        return NextResponse.json({ error: moreErr.message }, { status: 500 });
-
-      filler = more ?? [];
+      filler = fillerData ?? [];
     }
 
     const items = [...pinnedArtists, ...filler];
     return NextResponse.json({ items, nextOffset: items.length });
   }
 
+  // Next pages: keep going (excluding pinned)
+  const { data: pinned, error: pinnedErr } = await supabase
+    .from("pinned_popular_artists")
+    .select("artist_id");
+
+  if (pinnedErr) {
+    return NextResponse.json({ error: pinnedErr.message }, { status: 500 });
+  }
+
+  const pinnedIds = (pinned ?? []).map((p: any) => p.artist_id);
+
   const { data, error } = await supabase
     .from("artists")
     .select("*")
+    .not("id", "in", `(${pinnedIds.map((id) => `"${id}"`).join(",") || '""'})`)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
