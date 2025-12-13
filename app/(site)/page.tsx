@@ -43,24 +43,12 @@ export default async function Home() {
           <a href="/artists/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
         </div>
 
-        <div
-          className="
-            mt-4
-            grid
-            gap-x-6 gap-y-6
-            grid-cols-2
-            sm:grid-cols-3
-            md:grid-cols-4
-            lg:grid-cols-5
-            xl:grid-cols-6
-            2xl:grid-cols-7
-          "
-        >
-
-          {popularArtists.map((a) => (
-            <ArtistCard key={a.id} artist={a} />
-          ))}
-        </div>
+      {/* Spotify-style: more columns with smaller tiles */}
+      <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+        {popularArtists.map((a) => (
+          <ArtistCard key={a.id} artist={a} />
+        ))}
+      </div>
       </section>
 
       {/* POPULAR SONGS + MORE */}
