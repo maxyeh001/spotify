@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { Song } from '@/types';
-import { PlayButton } from './PlayButton';
-import { useLoadImage } from '@/hooks/useLoadImage';
+import Link from "next/link";
+import Image from "next/image";
+import { Song } from "@/types";
+import { PlayButton } from "./PlayButton";
+import { useLoadImage } from "@/hooks/useLoadImage";
 
 interface SongItemProps {
-  data: Song;
+  data: Song & {
+    slug?: string | null;
+    artist_slug?: string | null; // make sure your queries include this if you want /artist/song
+  };
   onClick: (id: string) => void;
 }
 
 export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
   const imagePath = useLoadImage(data);
 
-  return (
+  // Build the share URL if slugs exist.
+  // If not, fall back to "no link" and keep old click-to-play behavior.
+  const href =
+    data.slug && data.artist_slug ? `/${data.artist_slug}/${data.slug}` : null;
+
+  const CardInner = (
     <div
-      onClick={() => onClick(data.id)}
       className="
         relative
         group
@@ -33,18 +40,26 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
       "
     >
       <div className="relative aspect-square w-full h-full rounded-md overflow-hidden">
-        <Image loading="eager" className="object-cover" src={imagePath || '/images/liked.png'} fill alt="Image" />
+        <Image
+          loading="eager"
+          className="object-cover"
+          src={imagePath || "/images/liked.png"}
+          fill
+          alt="Image"
+        />
       </div>
 
       <div className="flex flex-col items-start w-full pt-3 gap-y-1">
         <p className="font-semibold truncate w-full">{data.title}</p>
+
         <p className="text-neutral-400 text-sm pb-2 w-full truncate">
-          By{' '}
+          By{" "}
+          {/* Keep your existing artist link as-is for now */}
           {data.artist_id ? (
             <Link
               href={`/artist/${data.artist_id}`}
               className="hover:underline"
-              onClick={(e) => e.stopPropagation()}  // don't trigger play
+              onClick={(e) => e.stopPropagation()}
             >
               {data.author}
             </Link>
@@ -54,9 +69,33 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
         </p>
       </div>
 
-      <div className="absolute bottom-24 right-5">
+      {/* Play button: plays without navigating */}
+      <div
+        className="absolute bottom-24 right-5"
+        onClick={(e) => {
+          e.preventDefault(); // stops Link navigation
+          e.stopPropagation(); // stops card click
+          onClick(data.id); // plays
+        }}
+      >
         <PlayButton />
       </div>
+    </div>
+  );
+
+  // If we have a shareable URL, wrap card in Link (click card = navigate).
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {CardInner}
+      </Link>
+    );
+  }
+
+  // Otherwise, keep old behavior: clicking the card plays.
+  return (
+    <div onClick={() => onClick(data.id)}>
+      {CardInner}
     </div>
   );
 };
