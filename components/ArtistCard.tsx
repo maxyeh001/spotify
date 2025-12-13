@@ -18,20 +18,13 @@ export function ArtistCard({ artist }: { artist: Artist }) {
     <div
       onClick={() => router.push(`/artist/${artist.id}`)}
       className="
-        group
-        cursor-pointer
-        rounded-md
-        bg-transparent
-        hover:bg-neutral-400/10
-        transition
-        p-2
-        flex
-        flex-col
-        gap-y-3
+        group cursor-pointer rounded-md bg-transparent
+        hover:bg-neutral-400/10 transition
+        p-1.5 flex flex-col gap-y-2
       "
-
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-full max-w-[180px] mx-auto">
+      {/* Smaller, Spotify-like avatar size */}
+      <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full">
         <Image
           fill
           src={avatarUrl || "/images/liked.png"}
@@ -40,9 +33,9 @@ export function ArtistCard({ artist }: { artist: Artist }) {
         />
       </div>
 
-      <div className="flex flex-col gap-y-1">
-        <p className="text-white font-semibold truncate">{artist.name}</p>
-        <p className="text-neutral-400 text-sm">Artist</p>
+      <div className="flex flex-col gap-y-0.5">
+        <p className="text-white font-semibold truncate text-sm">{artist.name}</p>
+        <p className="text-neutral-400 text-xs">Artist</p>
       </div>
     </div>
   );
