@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import { Song } from "@/types";
+import { SongItem } from "@/components/SongItem";
+import useOnPlay from "@/hooks/useOnPlay";
 import { getRandomSongs } from "@/actions/getRandomSongs";
-import { Song } from "@/types"; // adjust path to your Song type
-import { SongItem } from "@/components/SongItem"; // adjust import to match your project
+
+const PAGE_SIZE = 20; // keep in sync with getRandomSongs
 
 export default function RandomSongInfiniteList() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -11,26 +15,31 @@ export default function RandomSongInfiniteList() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  const onPlay = useOnPlay(songs);
+
   const loadMore = async () => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
 
     const next = await getRandomSongs(page);
-    if (!next.length) {
+
+    if (!next.length || next.length < PAGE_SIZE) {
       setHasMore(false);
-    } else {
-      setSongs(prev => [...prev, ...next]);
-      setPage(prev => prev + 1);
     }
+
+    setSongs((prev) => [...prev, ...next]);
+    setPage((prev) => prev + 1);
 
     setIsLoading(false);
   };
 
+  // initial load
   useEffect(() => {
     loadMore();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // infinite scroll listener
   useEffect(() => {
     const onScroll = () => {
       if (
@@ -47,14 +56,22 @@ export default function RandomSongInfiniteList() {
 
   return (
     <div className="space-y-2">
-      {songs.map(song => (
-        <SongItem key={song.id} data={song} />
+      {songs.map((song) => (
+        <SongItem
+          key={song.id}
+          data={song}
+          onClick={() => onPlay(song.id)}
+        />
       ))}
+
       {isLoading && (
         <p className="text-neutral-400 text-sm">Loading...</p>
       )}
-      {!hasMore && (
-        <p className="text-neutral-400 text-sm">No more songs to load.</p>
+
+      {!hasMore && !isLoading && (
+        <p className="text-neutral-400 text-sm">
+          No more songs to load.
+        </p>
       )}
     </div>
   );
