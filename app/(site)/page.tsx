@@ -49,23 +49,25 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* POPULAR SONGS */}
+      {/* POPULAR SONGS + MORE */}
       <section className="px-6 mb-10">
         <div className="flex justify-between">
           <h2 className="text-white text-2xl font-semibold">Popular Songs</h2>
-          <a href="/songs/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
+          <a
+            href="/songs/popular"
+            className="text-neutral-400 hover:text-white text-sm"
+          >
+            Show all
+          </a>
         </div>
 
+        {/* First 12 pinned popular songs */}
         <PageContent songs={popularSongs} />
+
+        {/* Infinite scroll of more songs, same layout */}
+        <RandomSongInfiniteList initialCount={popularSongs.length} />
       </section>
 
-      {/* MORE SONGS (INFINITE SCROLL) */}
-      <section className="px-6 mb-10">
-        <h2 className="text-white text-2xl font-semibold mb-4">
-          More songs for you
-        </h2>
-        <RandomSongInfiniteList />
-      </section>
 
       
     </div>
