@@ -7,6 +7,7 @@ import { getTrendingSongs } from "@/actions/getTrendingSongs";
 import { getPopularArtists } from "@/actions/getPopularArtists";
 import { getPopularSongs } from "@/actions/getPopularSongs";
 import RandomSongInfiniteList from "@/components/RandomSongInfiniteList";
+import PopularSongsGrid from "@/components/PopularSongsGrid";
 
 export const revalidate = 0;
 
@@ -61,11 +62,8 @@ export default async function Home() {
           </a>
         </div>
 
-        {/* First 12 pinned popular songs */}
-        <PageContent songs={popularSongs} />
+        <PopularSongsGrid initialSongs={popularSongs} />
 
-        {/* Infinite scroll of more songs, same layout */}
-        <RandomSongInfiniteList initialCount={popularSongs.length} />
       </section>
 
 
