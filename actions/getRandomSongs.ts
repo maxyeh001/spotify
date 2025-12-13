@@ -11,7 +11,7 @@ export async function getRandomSongs(page = 0) {
   const { data, error } = await supabaseClient
     .from("songs")
     .select("*, artists(*)")
-    .order("random") // ORDER BY random()
+    .order("created_at", { ascending: false }) // or "id"
     .range(from, to);
 
   if (error) {
