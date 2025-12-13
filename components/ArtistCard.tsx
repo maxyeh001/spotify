@@ -21,16 +21,17 @@ export function ArtistCard({ artist }: { artist: Artist }) {
         group
         cursor-pointer
         rounded-md
-        bg-neutral-400/5
+        bg-transparent
         hover:bg-neutral-400/10
         transition
-        p-3
+        p-2
         flex
         flex-col
         gap-y-3
       "
+
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-full">
+      <div className="relative aspect-square w-full overflow-hidden rounded-full max-w-[180px] mx-auto">
         <Image
           fill
           src={avatarUrl || "/images/liked.png"}
