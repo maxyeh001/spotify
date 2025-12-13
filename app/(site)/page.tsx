@@ -15,7 +15,7 @@ export default async function Home() {
   const [trending, popularArtists, popularSongs] = await Promise.all([
     getTrendingSongs(),
     getPopularArtists(),
-    getPopularSongs(12),
+    getPopularSongs(100),
   ]);
 
   return (
