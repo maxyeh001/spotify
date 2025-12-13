@@ -6,6 +6,7 @@ import { PlaylistCard } from "@/components/PlaylistCard";
 import { getTrendingSongs } from "@/actions/getTrendingSongs";
 import { getPopularArtists } from "@/actions/getPopularArtists";
 import { getPopularSongs } from "@/actions/getPopularSongs";
+import { RandomSongInfiniteList } from "@/components/RandomSongInfiniteList";
 
 export const revalidate = 0;
 
