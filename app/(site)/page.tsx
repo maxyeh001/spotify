@@ -57,6 +57,16 @@ export default async function Home() {
 
         <PageContent songs={popularSongs} />
       </section>
+
+      {/* MORE SONGS (INFINITE SCROLL) */}
+      <section className="px-6 mb-10">
+        <h2 className="text-white text-2xl font-semibold mb-4">
+          More songs for you
+        </h2>
+        <RandomSongInfiniteList />
+      </section>
+
+      
     </div>
   );
 }
