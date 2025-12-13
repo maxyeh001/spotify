@@ -1,29 +1,19 @@
-// app/actions/getPopularSongs.ts
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Song } from '@/types';
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
 
-type Row = Song & { liked_songs: { count: number }[] };
-
-export async function getPopularSongs(limit = 50): Promise<Song[]> {
+export async function getPopularSongs(limit = 12) {
   const supabase = createServerComponentClient({ cookies });
 
-  // fetch songs + aggregate like counts
   const { data, error } = await supabase
-    .from('songs')
-    .select('*, liked_songs(count)')
-    .limit(200); // fetch a bunch first
+    .from("songs")
+    .select("*, artists(*)")
+    .order("views", { ascending: false })
+    .limit(limit);
 
   if (error) {
-    console.error('[getPopularSongs]', error.message);
+    console.error("Error loading popular songs", error);
     return [];
   }
 
-  const rows = (data as Row[]).map((r) => ({
-    ...r,
-    _likes: r.liked_songs?.[0]?.count ?? 0,
-  }));
-
-  rows.sort((a, b) => (b as any)._likes - (a as any)._likes);
-  return rows.slice(0, limit);
+  return data;
 }
