@@ -25,8 +25,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const items = (data ?? []).map((s: any) => ({
+    ...s,
+    artist_slug: s.artists?.slug ?? null,
+  }));
+
   return NextResponse.json({
-    items: data ?? [],
-    nextOffset: offset + (data?.length ?? 0),
+    items,
+    nextOffset: offset + items.length,
   });
 }
