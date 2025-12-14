@@ -24,7 +24,7 @@ export function ArtistCard({ artist }: { artist: Artist }) {
       "
     >
       {/* Smaller, Spotify-like avatar size */}
-      <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full">
+      <div className="relative aspect-square w-full overflow-hidden rounded-full max-w-[150px] mx-auto">
         <Image
           fill
           src={avatarUrl || "/images/liked.png"}
