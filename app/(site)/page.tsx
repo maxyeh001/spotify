@@ -2,6 +2,8 @@ import { Header } from "@/components/Header";
 import { PageContent } from "@/components/PageContent";
 import { ArtistCard } from "@/components/ArtistCard";
 import { PlaylistCard } from "@/components/PlaylistCard";
+import TrendingSongsRow from "@/components/TrendingSongsRow";
+import PopularArtistsRow from "@/components/PopularArtistsRow";
 
 import { getTrendingSongs } from "@/actions/getTrendingSongs";
 import { getPopularArtists } from "@/actions/getPopularArtists";
@@ -33,15 +35,13 @@ export default async function Home() {
           <a href="/trending" className="text-neutral-400 hover:text-white text-sm">Show all</a>
         </div>
 
-        <PageContent songs={trending} />
+        <TrendingSongsRow songs={trending} />
       </section>
 
       {/* POPULAR ARTISTS */}
       <section className="px-6 mb-8">
-        <div className="flex justify-between">
-          <h2 className="text-white text-2xl font-semibold">Popular Artists</h2>
-          <a href="/artists/popular" className="text-neutral-400 hover:text-white text-sm">Show all</a>
-        </div>
+        <PopularArtistsRow artists={popularArtists} />
+
 
       {/* Spotify-style: more columns with smaller tiles */}
       <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
