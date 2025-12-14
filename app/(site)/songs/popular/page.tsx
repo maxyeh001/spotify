@@ -1,48 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { Header } from "@/components/Header";
+import { InfiniteGrid } from "@/components/InfiniteGrid";
 import SongCard from "@/components/SongCard";
-import usePlayer from "@/hooks/usePlayer";
 import { Song } from "@/types";
 
-const PopularSongsPage = () => {
-  const player = usePlayer();
-
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSongs = async () => {
-      try {
-        const res = await fetch("/api/songs/popular");
-        const data = await res.json();
-        setSongs(data);
-      } catch (error) {
-        console.error("Failed to fetch popular songs", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSongs();
-  }, []);
-
-  if (isLoading) {
-    return <div className="text-neutral-400">Loading...</div>;
-  }
-
+export default function PopularSongsPage() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-      {songs.map((song) => (
-        <SongCard
-          key={song.id}
-          data={song}
-          onClick={() => player.setId(song.id)}
+    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
+      <Header>
+        <h1 className="text-white text-3xl font-semibold">Popular songs</h1>
+      </Header>
+
+      <div className="px-6 py-6">
+        <InfiniteGrid<Song>
+          fetchUrl="/api/popular-songs"
+          renderItem={(song, all) => (
+            <SongCard song={song} queueIds={all.map((s) => s.id)} />
+          )}
         />
-      ))}
+      </div>
     </div>
   );
-};
-
-export default PopularSongsPage;
+}
