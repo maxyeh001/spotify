@@ -1,50 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Header } from "@/components/Header";
+import { InfiniteGrid } from "@/components/InfiniteGrid";
+import { ArtistCard } from "@/components/ArtistCard";
 
-import { Artist } from "@/types";
-import ArtistCard from "@/components/ArtistCard";
-import usePlayer from "@/hooks/usePlayer";
-
-const PopularArtistsPage = () => {
-  const router = useRouter();
-  const player = usePlayer();
-
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchArtists = async () => {
-      try {
-        const res = await fetch("/api/artists/popular");
-        const data = await res.json();
-        setArtists(data);
-      } catch (error) {
-        console.error("Failed to fetch popular artists", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchArtists();
-  }, []);
-
-  if (isLoading) {
-    return <div className="text-neutral-400">Loading...</div>;
-  }
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-      {artists.map((artist) => (
-        <ArtistCard
-          key={artist.id}
-          data={artist}
-          onClick={() => router.push(`/artist/${artist.id}`)}
-        />
-      ))}
-    </div>
-  );
+type Artist = {
+  id: string;
+  name: string;
+  avatar_path?: string | null;
 };
 
-export default PopularArtistsPage;
+export default function PopularArtistsPage() {
+  return (
+    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
+      <Header>
+        <h1 className="text-white text-3xl font-semibold">Popular artists</h1>
+      </Header>
+
+      <div className="px-6 py-6">
+        <InfiniteGrid<Artist>
+          fetchUrl="/api/popular-artists"
+          renderItem={(artist) => <ArtistCard artist={artist} />}
+        />
+      </div>
+    </div>
+  );
+}
