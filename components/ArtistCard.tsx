@@ -23,18 +23,20 @@ export function ArtistCard({ artist }: { artist: Artist }) {
         p-1.5 flex flex-col gap-y-2
       "
     >
-      {/* Smaller, Spotify-like avatar size */}
       <div className="relative aspect-square w-full overflow-hidden rounded-full max-w-[150px] mx-auto">
         <Image
           fill
           src={avatarUrl || "/images/liked.png"}
           alt={artist.name}
           className="object-cover"
+          sizes="150px"
         />
       </div>
 
       <div className="flex flex-col gap-y-0.5">
-        <p className="text-white font-semibold truncate text-sm">{artist.name}</p>
+        <p className="text-white font-semibold truncate text-sm">
+          {artist.name}
+        </p>
         <p className="text-neutral-400 text-xs">Artist</p>
       </div>
     </div>
