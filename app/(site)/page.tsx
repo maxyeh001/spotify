@@ -56,7 +56,7 @@ export default async function Home() {
       {/* POPULAR SONGS */}
       <section className="px-6 mb-10">
         <div className="flex justify-between items-center">
-          <h2 className="text-white text-2xl font-semibold">Popular Songs</h2>
+          <h2 className="text-white text-xl font-semibold">Popular Songs</h2>
           <a
             href="/songs/popular"
             className="text-neutral-400 hover:text-white text-sm"
