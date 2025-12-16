@@ -42,8 +42,8 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
           fill
           alt="Image"
           className="object-cover"
-          loading="eager"
         />
+
 
         <div className="absolute bottom-2 right-2" onClick={handlePlayClick}>
           <PlayButton />
