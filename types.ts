@@ -8,6 +8,15 @@ export interface Song {
   song_path: string;
   image_path: string;
   artist_id?: string | null;
+
+  // Optional metadata (exists in DB but not always needed by every UI)
+  created_at?: string | null;
+
+  // Derived fields (e.g. aggregate like count)
+  likes?: number;
+
+  // Optional: if you later store audio duration in the DB
+  duration_seconds?: number | null;
 }
 
 export interface UserDetails {
