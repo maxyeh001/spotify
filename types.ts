@@ -1,5 +1,21 @@
 import Stripe from 'stripe';
 
+export interface Artist {
+  id: string;
+  name: string;
+  bio?: string | null;
+  avatar_path?: string | null;
+  hero_path?: string | null;
+  slug?: string | null;
+  is_popular?: boolean | null;
+  created_at?: string | null;
+
+  instagram_url?: string | null;
+  twitter_url?: string | null;
+  reddit_profile_url?: string | null;
+  subreddit_url?: string | null;
+}
+
 export interface Song {
   id: string;
   user_id: string;
@@ -9,13 +25,9 @@ export interface Song {
   image_path: string;
   artist_id?: string | null;
 
-  // Optional metadata (exists in DB but not always needed by every UI)
   created_at?: string | null;
-
-  // Derived fields (e.g. aggregate like count)
   likes?: number;
 
-  // Optional: if you later store audio duration in the DB
   duration_seconds?: number | null;
 }
 
