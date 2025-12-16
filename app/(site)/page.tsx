@@ -10,22 +10,22 @@ import PopularSongsGrid from "@/components/PopularSongsGrid";
 
 export const revalidate = 0;
 
-// 👇 how many items to show on the homepage
+// Home page limits
 const TRENDING_LIMIT = 20;
 const ARTISTS_LIMIT = 20;
-const SONGS_LIMIT = 20;
+
+// ~5 rows on desktop (usually 6 columns) => 30. Use 36 as a buffer.
+const POPULAR_SONGS_LIMIT = 36;
 
 export default async function Home() {
-  const [trendingAll, popularArtistsAll, popularSongsAll] = await Promise.all([
+  const [trendingAll, popularArtistsAll, popularSongs] = await Promise.all([
     getTrendingSongs(),
     getPopularArtists(),
-    getPopularSongs(100),
+    getPopularSongs(POPULAR_SONGS_LIMIT),
   ]);
 
-  // 👇 only pass 20 items to the UI
   const trending = trendingAll.slice(0, TRENDING_LIMIT);
   const popularArtists = popularArtistsAll.slice(0, ARTISTS_LIMIT);
-  const popularSongs = popularSongsAll.slice(0, SONGS_LIMIT);
 
   return (
     <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
