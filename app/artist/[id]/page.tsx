@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { getArtist } from '@/actions/getArtist';
 import { getArtistSongs } from '@/actions/getArtistSongs';
-import { PageContent } from '@/components/PageContent';
+import { ArtistSongsSection } from '@/components/ArtistSongsSection';
 
 type Params = { params: { id: string } };
 
@@ -60,23 +60,7 @@ export default async function ArtistPage({ params }: Params) {
       </div>
 
       {/* CONTENT BELOW HERO */}
-      <div className="px-6 py-6">
-        {!!popular.length && (
-          <>
-            <h2 className="text-white text-2xl font-semibold mb-3">Popular</h2>
-            <PageContent songs={popular} />
-          </>
-        )}
-
-        {!!others.length && (
-          <>
-            <h2 className="text-white text-2xl font-semibold mt-8 mb-3">
-              All songs
-            </h2>
-            <PageContent songs={others} />
-          </>
-        )}
-      </div>
+      <ArtistSongsSection popular={popular} others={others} />
     </div>
   );
 }
