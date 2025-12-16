@@ -14,31 +14,24 @@ export default function PopularSongsGridStatic({ songs }: Props) {
 
   return (
     <div className="mt-4">
-      {/* SONG GRID */}
+      {/* SONG GRID (fixed tile width = same as TrendingSongsRow) */}
       <div
         className="
           grid
-          grid-cols-2
-          sm:grid-cols-3
-          md:grid-cols-4
-          lg:grid-cols-6
-          gap-4
+          justify-start
+          gap-x-6
+          gap-y-6
+          [grid-template-columns:repeat(auto-fill,minmax(152px,152px))]
         "
       >
         {songs.map((song) => (
-          <div
-            key={song.id}
-            className="max-w-[180px] w-full justify-self-start"
-          >
-            <SongItem
-              data={song}
-              onClick={(id) => onPlay(id)}
-            />
+          <div key={song.id} className="w-[152px] shrink-0">
+            <SongItem data={song} onClick={() => onPlay(song.id)} />
           </div>
         ))}
       </div>
 
-      {/* SHOW ALL BUTTON */}
+      {/* SHOW ALL BUTTON (centered) */}
       <div className="flex justify-center mt-8">
         <Link
           href="/songs/popular"
