@@ -16,20 +16,15 @@ import { Library } from './Library';
 
 import { Song } from '@/types';
 
-//* Declaring the type for the Sidebar component's properties
 interface SidebarProps {
   children: React.ReactNode;
   songs: Song[];
 }
 
-//* Sidebar component using React Function Component with SidebarProps
 export const Sidebar: React.FC<SidebarProps> = ({ children, songs }) => {
-  //* Using Next.js usePathname hook to get the current URL path
   const pathname = usePathname();
-
   const player = usePlayer();
 
-  //* Defining sidebar routes with useMemo hook for performance optimization
   const routes = useMemo(
     () => [
       {
@@ -49,7 +44,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ children, songs }) => {
   );
 
   return (
-    //* Make class dynamic depending on open player vs closed player
     <div
       className={twMerge(
         `
@@ -71,7 +65,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ children, songs }) => {
           <Library songs={songs} />
         </Box>
       </div>
-      <main className="h-full flex-1 overflow-y-auto py-2">{children}</main>
+
+      {/* IMPORTANT: give the scroll container an id so IntersectionObserver can use it */}
+      <main id="scroll-area" className="h-full flex-1 overflow-y-auto py-2">
+        {children}
+      </main>
     </div>
   );
 };
