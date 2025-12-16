@@ -28,30 +28,24 @@ export default async function ArtistPage({ params }: Params) {
     <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
       {/* HERO SECTION */}
       <div className="relative w-full h-[260px]">
-        {/* Hero image */}
-        <Image
-          src={hero}
-          alt={`${artist.name} hero`}
-          fill
-          className="object-cover"
-          priority
-        />
-        {/* Dark overlay so text is readable */}
+        <Image src={hero} alt={`${artist.name} hero`} fill className="object-cover" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black" />
 
-        {/* Avatar + text over hero */}
         <div className="absolute left-6 bottom-6 flex gap-6 items-end">
           <div className="relative h-40 w-40 rounded-md overflow-hidden shadow-xl">
             <Image src={avatar} alt={artist.name} fill className="object-cover" />
           </div>
+
           <div className="flex flex-col">
             <span className="text-sm text-neutral-300">Artist</span>
             <h1 className="text-5xl md:text-6xl font-extrabold text-white">
               {artist.name}
             </h1>
+
             {artist.bio ? (
               <p className="text-neutral-300 mt-2 max-w-2xl">{artist.bio}</p>
             ) : null}
+
             <p className="text-neutral-400 text-sm mt-1">
               {popular.length + others.length} tracks
             </p>
@@ -59,8 +53,8 @@ export default async function ArtistPage({ params }: Params) {
         </div>
       </div>
 
-      {/* CONTENT BELOW HERO */}
-      <ArtistSongsSection popular={popular} others={others} />
+      {/* CONTENT */}
+      <ArtistSongsSection artist={artist} popular={popular} others={others} />
     </div>
   );
 }
