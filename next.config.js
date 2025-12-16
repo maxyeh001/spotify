@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true, // 👈 ADD THIS LINE
+
     remotePatterns: [
       // Supabase (keep if still used)
       {
