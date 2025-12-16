@@ -1,28 +1,35 @@
-// actions/getArtist.ts
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Artist } from '@/types';
 
-export type DbArtist = {
-  id: string;
-  name: string;
-  bio: string | null;
-  avatar_path: string | null;
-  hero_path: string | null;
-  created_at: string;
-};
-
-export async function getArtist(id: string): Promise<DbArtist | null> {
+export const getArtist = async (id: string): Promise<Artist | null> => {
   const supabase = createServerComponentClient({ cookies });
 
   const { data, error } = await supabase
     .from('artists')
-    .select('id,name,bio,avatar_path,hero_path,created_at')
+    .select(
+      `
+      id,
+      name,
+      bio,
+      avatar_path,
+      hero_path,
+      slug,
+      is_popular,
+      created_at,
+      instagram_url,
+      twitter_url,
+      reddit_profile_url,
+      subreddit_url
+    `
+    )
     .eq('id', id)
     .single();
 
   if (error) {
-    console.error('[getArtist]', error.message);
+    console.error('[getArtist] error:', error.message);
     return null;
   }
-  return data;
-}
+
+  return data as Artist;
+};
