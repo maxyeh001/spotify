@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Song } from "@/types";
 import { PlayButton } from "./PlayButton";
 import { useLoadImage } from "@/hooks/useLoadImage";
+import LazyImg from "@/components/LazyImg";
 
 interface SongItemProps {
   data: Song & {
@@ -17,7 +17,6 @@ interface SongItemProps {
 export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
   const imagePath = useLoadImage(data);
 
-  // Only create a share URL if both slugs exist
   const href =
     data.slug && data.artist_slug ? `/${data.artist_slug}/${data.slug}` : null;
 
@@ -37,15 +36,12 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
       "
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-md">
-        <Image
+        {/* Using <img> + IntersectionObserver lazy loading (works in your custom scroll container) */}
+        <LazyImg
           src={imagePath || "/images/liked.png"}
-          fill
           alt="Image"
-          className="object-cover"
-          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
         />
-
-
 
         <div className="absolute bottom-2 right-2" onClick={handlePlayClick}>
           <PlayButton />
@@ -73,7 +69,6 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
     </div>
   );
 
-  // If we have a real link, clicking the card navigates
   if (href) {
     return (
       <Link href={href} className="block">
@@ -82,7 +77,6 @@ export const SongItem: React.FC<SongItemProps> = ({ data, onClick }) => {
     );
   }
 
-  // Otherwise, clicking the card plays
   return (
     <div onClick={() => onClick(data.id)}>
       <Card />
