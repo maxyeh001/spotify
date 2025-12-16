@@ -21,15 +21,17 @@ export async function getArtistSongs(
     return { popular: [], others: [] };
   }
 
-  const rows = (data as Row[]).map((r) => ({
-    ...r,
-    _likes: r.liked_songs?.[0]?.count ?? 0,
+  // Attach derived like counts to the song objects so the UI can sort/display them.
+  const rows: Song[] = (data as Row[]).map((r) => ({
+    ...(r as any),
+    likes: r.liked_songs?.[0]?.count ?? 0,
   }));
 
-  rows.sort((a, b) => (b as any)._likes - (a as any)._likes);
+  // Default popularity ordering = most likes first.
+  rows.sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0));
 
-  const popular = rows.slice(0, 10).map(({ _likes, ...rest }: any) => rest);
-  const others = rows.slice(10).map(({ _likes, ...rest }: any) => rest);
+  const popular = rows.slice(0, 10);
+  const others = rows.slice(10);
 
   return { popular, others };
 }
