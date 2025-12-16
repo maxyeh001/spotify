@@ -10,12 +10,22 @@ import PopularSongsGrid from "@/components/PopularSongsGrid";
 
 export const revalidate = 0;
 
+// 👇 how many items to show on the homepage
+const TRENDING_LIMIT = 20;
+const ARTISTS_LIMIT = 20;
+const SONGS_LIMIT = 20;
+
 export default async function Home() {
-  const [trending, popularArtists, popularSongs] = await Promise.all([
+  const [trendingAll, popularArtistsAll, popularSongsAll] = await Promise.all([
     getTrendingSongs(),
     getPopularArtists(),
     getPopularSongs(100),
   ]);
+
+  // 👇 only pass 20 items to the UI
+  const trending = trendingAll.slice(0, TRENDING_LIMIT);
+  const popularArtists = popularArtistsAll.slice(0, ARTISTS_LIMIT);
+  const popularSongs = popularSongsAll.slice(0, SONGS_LIMIT);
 
   return (
     <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
