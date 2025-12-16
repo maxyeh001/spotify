@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Song } from "@/types";
-import SongItem from "@/components/SongItem";
-import useOnPlay from "@/hooks/useOnPlay";
+import { SongItem } from "@/components/SongItem";
+import { useOnPlay } from "@/hooks/useOnPlay";
 
 interface Props {
   songs: Song[];
@@ -25,7 +25,7 @@ export default function PopularSongsGridStatic({ songs }: Props) {
         ))}
       </div>
 
-      {/* SHOW ALL BUTTON */}
+      {/* SHOW ALL BUTTON (centered) */}
       <div className="flex justify-center mt-8">
         <Link
           href="/songs/popular"
