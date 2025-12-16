@@ -6,7 +6,7 @@ import { getPopularSongs } from "@/actions/getPopularSongs";
 
 import TrendingSongsRow from "@/components/TrendingSongsRow";
 import PopularArtistsRow from "@/components/PopularArtistsRow";
-import PopularSongsGrid from "@/components/PopularSongsGrid";
+import PopularSongsGridStatic from "@/components/PopularSongsGridStatic";
 
 export const revalidate = 0;
 
@@ -75,7 +75,7 @@ export default async function Home() {
           </a>
         </div>
 
-        <PopularSongsGrid initialSongs={popularSongs} />
+       <PopularSongsGridStatic songs={popularSongs} />
       </section>
     </div>
   );
