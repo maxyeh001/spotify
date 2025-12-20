@@ -34,7 +34,7 @@ export const MediaItem: React.FC<MediaItemProps> = ({ data, onClick }) => {
         <p className="text-neutral-400 text-sm truncate">
           {data.artist_id ? (
             <Link
-              href={`/artist/${data.artist_id}`}
+              href={`/artist/${(data as any).artist_slug ?? data.artist_id}`}
               className="hover:underline"
               onClick={(e) => e.stopPropagation()}  // don't trigger play/pause on link click
             >
