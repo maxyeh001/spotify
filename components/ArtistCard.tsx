@@ -7,6 +7,7 @@ import { useLoadArtistImage } from "@/hooks/useLoadArtistImage";
 type Artist = {
   id: string;
   name: string;
+  slug?: string | null;
   avatar_path?: string | null;
 };
 
@@ -16,7 +17,7 @@ export function ArtistCard({ artist }: { artist: Artist }) {
 
   return (
     <div
-      onClick={() => router.push(`/artist/${artist.id}`)}
+      onClick={() => router.push(`/artist/${artist.slug ?? artist.id}`)}
       className="
         group cursor-pointer rounded-md bg-transparent
         hover:bg-neutral-400/10 transition
