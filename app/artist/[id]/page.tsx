@@ -5,6 +5,8 @@ import { getArtist } from '@/actions/getArtist';
 import { getArtistSongs } from '@/actions/getArtistSongs';
 import { ArtistSongsSection } from '@/components/ArtistSongsSection';
 
+import { redirect, notFound } from "next/navigation";
+
 type Params = { params: { id: string } };
 
 export const revalidate = 0;
@@ -57,4 +59,15 @@ export default async function ArtistPage({ params }: Params) {
       <ArtistSongsSection artist={artist} popular={popular} others={others} />
     </div>
   );
+
+  export default async function ArtistPage({ params }: { params: { id: string } }) {
+  const artist = await getArtist(params.id);
+  if (!artist) return notFound();
+
+  // If slug exists, canonicalize to the pretty URL
+  if (artist.slug) redirect(`/artist/${artist.slug}`);
+
+  // fallback if slug missing
+  // ... (your current page rendering)
+  };
 }
