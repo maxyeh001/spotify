@@ -45,7 +45,7 @@ export const ArtistSongsSection: React.FC<Props> = ({ artist, popular, others })
           {!!popular.length && (
             <section>
               <h2 className="text-white text-2xl font-semibold mb-3">Popular</h2>
-              <TrackTable songs={popular} variant="popular" showHeader={false} />
+              <TrackTable songs={popular} variant="popular" showHeader={false} artistSlug={artist.slug} />
             </section>
           )}
 
@@ -68,7 +68,7 @@ export const ArtistSongsSection: React.FC<Props> = ({ artist, popular, others })
                 </div>
               </div>
 
-              <TrackTable songs={sorted} variant="all" showHeader />
+              <TrackTable songs={sorted} variant="all" showHeader artistSlug={artist.slug} />
             </section>
           )}
         </div>
