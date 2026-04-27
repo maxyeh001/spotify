@@ -24,6 +24,7 @@ export interface Song {
   song_path: string;
   image_path: string;
   artist_id?: string | null;
+  slug?: string | null;
 
   created_at?: string | null;
   likes?: number;
