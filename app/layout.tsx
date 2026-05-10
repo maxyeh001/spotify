@@ -65,6 +65,7 @@ export default async function RootLayout({
               `}
             </Script>
           </>
+      )}
       </head>
 
       <body className={font.className}>
