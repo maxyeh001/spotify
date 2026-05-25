@@ -6,11 +6,9 @@ import { Header } from "@/components/Header";
 import { Song } from "@/types";
 
 export default function SongPageClient({
-  artist,
-  song,
+  children,
 }: {
-  artist: any;
-  song: Song;
+  children: React.ReactNode;
 }) {
   const [queueIds, setQueueIds] = useState<string[]>([song.id]);
 
