@@ -1,51 +1,85 @@
-"use client";
+import { Sidebar } from '@/components/Sidebar';
+import './globals.css';
 
-import { useEffect, useState } from "react";
-import SongCard from "@/components/SongCard";
-import { Header } from "@/components/Header";
-import { Song } from "@/types";
+import { Analytics } from '@vercel/analytics/react';
+import { Figtree } from 'next/font/google';
+import Script from 'next/script';
 
-export default function SongPageClient({
+import { SupabaseProvider } from '@/providers/SupabaseProvider';
+import { UserProvider } from '@/providers/UserProvider';
+import { ModalProvider } from '@/providers/ModalProvider';
+import { ToasterProvider } from '@/providers/ToasterProvider';
+
+import { getSongsByUserId } from '@/actions/getSongsByUserId';
+import { Player } from '@/components/Player';
+import { getActiveProductsWithPrices } from '@/actions/getActiveProductsWithPrices';
+
+const font = Figtree({ subsets: ['latin'] });
+
+//* Describe the web app
+export const metadata = {
+  title: 'Boyfriend ASMR',
+  description: 'Listen to your favorite ASMRtists!',
+};
+
+export const revalidate = 0;
+
+//* Main layout component for the app
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [queueIds, setQueueIds] = useState<string[]>([song.id]);
-
-  // Optional: bump view count when someone lands here
-  useEffect(() => {
-    fetch(`/api/songs/${song.id}/view`, { method: "POST" }).catch(() => {});
-  }, [song.id]);
-
-  useEffect(() => {
-    if (!song.artist_id) return;
-
-    const params = new URLSearchParams({
-      artistId: song.artist_id,
-      songId: song.id,
-      title: song.title,
-    });
-
-    fetch(`/api/queue/for-song?${params.toString()}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (Array.isArray(data?.queueIds) && data.queueIds.length > 0) {
-          setQueueIds(data.queueIds);
-        }
-      })
-      .catch(() => {});
-  }, [song.artist_id, song.id, song.title]);
+  const userSongs = await getSongsByUserId();
+  const products = await getActiveProductsWithPrices();
 
   return (
-    <div className="bg-neutral-900 rounded-lg h-full w-full overflow-hidden overflow-y-auto">
-      <Header>
-        <h1 className="text-white text-3xl font-semibold">{song.title}</h1>
-        <p className="text-neutral-400 mt-1">{artist.name}</p>
-      </Header>
+    <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="../images/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon-16x16.png" />
 
-      <div className="px-6 py-6 max-w-[520px]">
-        <SongCard song={song} queueIds={queueIds} />
-      </div>
-    </div>
+        {/* Hotjar / Contentsquare */}
+        {process.env.NODE_ENV === 'production' && (
+          <Script
+            src="https://t.contentsquare.net/uxa/ecc32f9395340.js"
+            strategy="afterInteractive"
+          />
+        )}
+
+        {/* Google Analytics */}
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-MVD90BGG1C"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-MVD90BGG1C');
+              `}
+            </Script>
+          </>
+      )}
+      </head>
+
+      <body className={font.className}>
+        <ToasterProvider />
+        <SupabaseProvider>
+          <UserProvider>
+            <ModalProvider products={products} />
+            <Sidebar songs={userSongs}>{children}</Sidebar>
+            <Player />
+          </UserProvider>
+        </SupabaseProvider>
+
+        <Analytics />
+      </body>
+    </html>
   );
 }
