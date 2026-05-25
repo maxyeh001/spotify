@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, ChangeEvent } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import useSound from 'use-sound';
 
 import { Song } from '@/types';
@@ -51,33 +51,6 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
   const cycleRepeat = () =>
     setRepeatMode((m) => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'));
 
-  const isAtEndOfQueue = () => {
-    if (player.ids.length === 0) return true;
-    const currentIndex = player.ids.findIndex((id) => id === player.activeId);
-    return currentIndex === -1 || currentIndex >= player.ids.length - 1;
-  };
-
-  const getSameArtistQueue = useCallback(async () => {
-    if (!song.artist_id) return [] as string[];
-
-    try {
-      const params = new URLSearchParams({
-        artistId: song.artist_id,
-        songId: song.id,
-        title: song.title,
-      });
-
-      const res = await fetch(`/api/queue/for-song?${params.toString()}`);
-      if (!res.ok) return [] as string[];
-
-      const data = await res.json();
-      return Array.isArray(data.queueIds) ? (data.queueIds as string[]) : [];
-    } catch (error) {
-      console.error('Error loading same-artist queue', error);
-      return [] as string[];
-    }
-  }, [song.artist_id, song.id, song.title]);
-
   const pickNextIndex = () => {
     if (player.ids.length === 0) return -1;
     const currentIndex = player.ids.findIndex((id) => id === player.activeId);
@@ -86,12 +59,8 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
       while (idx === currentIndex) idx = Math.floor(Math.random() * player.ids.length);
       return idx;
     }
-
-    if (isAtEndOfQueue()) {
-      return repeatMode === 'all' && player.ids.length > 1 ? 0 : -1;
-    }
-
-    return currentIndex + 1;
+    // normal sequential (wrap when repeat all)
+    return (currentIndex + 1) % player.ids.length;
   };
 
   const pickPrevIndex = () => {
@@ -105,20 +74,9 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
     return (currentIndex - 1 + player.ids.length) % player.ids.length;
   };
 
-  const onPlayNextSong = async () => {
+  const onPlayNextSong = () => {
     const nextIndex = pickNextIndex();
-    if (nextIndex >= 0) {
-      player.setId(player.ids[nextIndex]);
-      return;
-    }
-
-    const queueIds = await getSameArtistQueue();
-    const nextId = queueIds.find((id) => id !== player.activeId);
-
-    if (nextId) {
-      player.setIds(queueIds);
-      player.setId(nextId);
-    }
+    if (nextIndex >= 0) player.setId(player.ids[nextIndex]);
   };
 
   const onPlayPreviousSong = () => {
