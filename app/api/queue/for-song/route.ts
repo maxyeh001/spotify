@@ -27,14 +27,18 @@ export async function GET(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // 1) Same artist, high views
-  const { data: sameArtist } = await supabase
+  // 1) Same artist, randomized so shared one-song links still lead
+  // somewhere fresh when the local player queue is exhausted.
+  const { data: sameArtistRows } = await supabase
     .from("songs")
     .select("id")
     .eq("artist_id", artistId)
     .neq("id", songId)
-    .order("views", { ascending: false })
-    .limit(40);
+    .limit(100);
+
+  const sameArtist = [...(sameArtistRows ?? [])]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 40);
 
   // 2) “Similar” by title keywords (fallback: views)
   const words = keywords(title);
