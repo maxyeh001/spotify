@@ -36,6 +36,7 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
   // shuffle / repeat
   const [shuffle, setShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
+  const [isFindingNextSong, setIsFindingNextSong] = useState(false);
 
   const Icon = isPlaying ? BsPauseFill : BsPlayFill;
   const VolumeIcon = volume === 0 ? HiSpeakerXMark : HiSpeakerWave;
@@ -74,7 +75,49 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
     return (currentIndex - 1 + player.ids.length) % player.ids.length;
   };
 
-  const onPlayNextSong = () => {
+  const fetchSameArtistQueue = async (): Promise<string[] | null> => {
+    if (!song.artist_id) return null;
+
+    const params = new URLSearchParams({
+      artistId: song.artist_id,
+      songId: song.id,
+      title: song.title ?? '',
+    });
+
+    const response = await fetch(`/api/queue/for-song?${params.toString()}`);
+    if (!response.ok) return null;
+
+    const json = await response.json();
+    const queueIds: string[] = Array.isArray(json?.queueIds) ? json.queueIds : [];
+    return queueIds.length ? queueIds : null;
+  };
+
+  const onPlayNextSong = async () => {
+    if (isFindingNextSong) return;
+
+    const currentIndex = player.ids.findIndex((id) => id === player.activeId);
+    const queueIsEmptyOrSingle = player.ids.length <= 1;
+    const queueIsAtEnd =
+      repeatMode !== 'all' && currentIndex >= 0 && currentIndex === player.ids.length - 1;
+
+    if (queueIsEmptyOrSingle || queueIsAtEnd) {
+      try {
+        setIsFindingNextSong(true);
+        const queueIds = await fetchSameArtistQueue();
+        const nextId = queueIds?.find((id) => id !== song.id);
+
+        if (queueIds && nextId) {
+          player.setIds(queueIds);
+          player.setId(nextId);
+          return;
+        }
+      } catch (error) {
+        console.error('Unable to load same-artist queue', error);
+      } finally {
+        setIsFindingNextSong(false);
+      }
+    }
+
     const nextIndex = pickNextIndex();
     if (nextIndex >= 0) player.setId(player.ids[nextIndex]);
   };
@@ -101,7 +144,7 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
       sound?.play();
       return;
     }
-    onPlayNextSong();
+    void onPlayNextSong();
   },
 
   // optional: log any mobile errors so we can see them
@@ -208,7 +251,7 @@ export const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) =
               <Icon size={30} className="text-black" />
             </div>
             <AiFillStepForward
-              onClick={onPlayNextSong}
+              onClick={() => void onPlayNextSong()}
               size={28}
               className="text-neutral-400 cursor-pointer hover:text-white transition"
               title="Next"
