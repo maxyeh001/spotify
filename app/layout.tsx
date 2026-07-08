@@ -73,7 +73,10 @@ export default async function RootLayout({
         crossOrigin="anonymous"
         strategy="afterInteractive"
       />
-      <meta name="google-adsense-account" content="ca-pub-4594604352763722">
+      <meta
+          name="google-adsense-account"
+          content="ca-pub-4594604352763722"
+        />
         
       </head>
 
